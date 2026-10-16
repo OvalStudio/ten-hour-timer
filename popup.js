@@ -1,4 +1,5 @@
-const TOTAL_MS = 10 * 60 * 60 * 1000;
+const DEFAULT_HOURS = 10;
+const DEFAULT_MINUTES = 0;
 
 const timeEl = document.getElementById("time");
 const statusEl = document.getElementById("status");
@@ -6,10 +7,26 @@ const progressEl = document.getElementById("progress");
 const ringEl = document.querySelector(".ring");
 const startBtn = document.getElementById("start");
 const resetBtn = document.getElementById("reset");
+const hoursEl = document.getElementById("hours");
+const minutesEl = document.getElementById("minutes");
 
 let endTime = null;
-let remainingMs = TOTAL_MS;
+let remainingMs = null;
+let totalMs = null;
 let ready = false;
+let lastBadge = null;
+
+function readInt(el, max) {
+  const n = parseInt(el.value, 10);
+  if (Number.isNaN(n) || n < 0) return 0;
+  return Math.min(n, max);
+}
+
+function inputTotalMs() {
+  const hours = readInt(hoursEl, 99);
+  const minutes = readInt(minutesEl, 59);
+  return (hours * 3600 + minutes * 60) * 1000;
+}
 
 function getRemaining() {
   if (endTime !== null) {
@@ -30,8 +47,6 @@ function formatEndTime(ts) {
   return new Date(ts).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
-let lastBadge = null;
-
 function setBadge(remaining, running) {
   let text = "";
   if (running) {
@@ -49,8 +64,14 @@ function setBadge(remaining, running) {
   chrome.action.setBadgeText({ text });
 }
 
-async function persist() {
-  await chrome.storage.local.set({ endTime, remainingMs });
+function persist() {
+  return chrome.storage.local.set({
+    endTime,
+    remainingMs,
+    totalMs,
+    hours: readInt(hoursEl, 99),
+    minutes: readInt(minutesEl, 59),
+  });
 }
 
 function finish() {
@@ -68,55 +89,104 @@ function render() {
     remaining = 0;
   }
 
-  const running = endTime !== null && remaining > 0;
+  const running = endTime !== null;
+  const configured = inputTotalMs();
+  const denominator = running ? totalMs || configured || 1 : configured > 0 ? configured : 1;
 
   timeEl.textContent = formatTime(remaining);
-  progressEl.style.strokeDashoffset = String(100 - (remaining / TOTAL_MS) * 100);
-  ringEl.classList.toggle("finished", remaining <= 0);
+  progressEl.style.strokeDashoffset = String(100 - Math.min(1, remaining / denominator) * 100);
+  ringEl.classList.toggle("finished", remaining <= 0 && configured > 0);
   statusEl.classList.remove("running", "finished");
 
   if (running) {
     statusEl.textContent = `Ends at ${formatEndTime(endTime)}`;
     statusEl.classList.add("running");
-  } else if (remaining <= 0) {
+  } else if (remaining <= 0 && configured > 0) {
     statusEl.textContent = "Time's up!";
+    statusEl.classList.add("finished");
+  } else if (configured <= 0) {
+    statusEl.textContent = "Set a duration";
     statusEl.classList.add("finished");
   } else {
     statusEl.textContent = "Ready";
   }
 
-  startBtn.disabled = running;
+  hoursEl.disabled = running;
+  minutesEl.disabled = running;
+  startBtn.disabled = running || configured <= 0;
   setBadge(remaining, running);
 }
 
+function onDurationInput() {
+  if (endTime === null) {
+    const configured = inputTotalMs();
+    remainingMs = configured;
+    totalMs = configured;
+    persist();
+  }
+  render();
+}
+
 startBtn.addEventListener("click", () => {
-  let remaining = getRemaining();
-  if (endTime !== null && remaining > 0) return;
-  if (remaining <= 0) remaining = TOTAL_MS;
-  endTime = Date.now() + remaining;
-  remainingMs = remaining;
+  if (endTime !== null) return;
+  const configured = inputTotalMs();
+  if (configured <= 0) return;
+  endTime = Date.now() + configured;
+  remainingMs = configured;
+  totalMs = configured;
+  lastBadge = null;
   persist();
   render();
 });
 
 resetBtn.addEventListener("click", () => {
+  const configured = inputTotalMs();
   endTime = null;
-  remainingMs = TOTAL_MS;
+  remainingMs = configured;
+  totalMs = configured;
+  lastBadge = null;
   persist();
   render();
+});
+
+hoursEl.addEventListener("input", onDurationInput);
+minutesEl.addEventListener("input", onDurationInput);
+
+hoursEl.addEventListener("blur", () => {
+  hoursEl.value = String(readInt(hoursEl, 99));
+  onDurationInput();
+});
+
+minutesEl.addEventListener("blur", () => {
+  minutesEl.value = String(readInt(minutesEl, 59));
+  onDurationInput();
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== "local") return;
   if ("endTime" in changes) endTime = changes.endTime.newValue;
   if ("remainingMs" in changes) remainingMs = changes.remainingMs.newValue;
+  if ("totalMs" in changes) totalMs = changes.totalMs.newValue;
   render();
 });
 
-chrome.storage.local.get({ endTime: null, remainingMs: TOTAL_MS }, (state) => {
-  endTime = state.endTime;
-  remainingMs = state.remainingMs;
-  ready = true;
-  render();
-  setInterval(render, 250);
-});
+chrome.storage.local.get(
+  {
+    endTime: null,
+    remainingMs: null,
+    totalMs: null,
+    hours: DEFAULT_HOURS,
+    minutes: DEFAULT_MINUTES,
+  },
+  (state) => {
+    endTime = state.endTime;
+    hoursEl.value = String(state.hours);
+    minutesEl.value = String(state.minutes);
+    const configured = inputTotalMs();
+    totalMs = state.totalMs ?? configured;
+    remainingMs = state.remainingMs ?? configured;
+    ready = true;
+    render();
+    setInterval(render, 250);
+  }
+);

@@ -6,7 +6,13 @@ const NOTIFICATION_ID = "ten-hour-timer-done";
 chrome.runtime.onInstalled.addListener(async () => {
   const state = await chrome.storage.local.get(["remainingMs"]);
   if (typeof state.remainingMs !== "number") {
-    await chrome.storage.local.set({ endTime: null, remainingMs: TOTAL_MS });
+    await chrome.storage.local.set({
+      endTime: null,
+      remainingMs: TOTAL_MS,
+      totalMs: TOTAL_MS,
+      hours: 10,
+      minutes: 0,
+    });
   }
   await ensureAlarms();
   await updateBadge();
@@ -39,11 +45,17 @@ async function ensureAlarms() {
   }
 }
 
+function formatDuration(ms) {
+  const totalMinutes = Math.max(1, Math.round(ms / 60000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours > 0 && minutes > 0) return `${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h`;
+  return `${minutes}m`;
+}
+
 async function tick() {
-  const { endTime, remainingMs } = await chrome.storage.local.get({
-    endTime: null,
-    remainingMs: TOTAL_MS,
-  });
+  const { endTime } = await chrome.storage.local.get({ endTime: null });
 
   if (endTime === null) {
     await updateBadge();
@@ -52,13 +64,14 @@ async function tick() {
 
   const remaining = endTime - Date.now();
   if (remaining <= 0) {
+    const { totalMs } = await chrome.storage.local.get({ totalMs: TOTAL_MS });
     await chrome.storage.local.set({ endTime: null, remainingMs: 0 });
     await updateBadge();
     chrome.notifications.create(NOTIFICATION_ID, {
       type: "basic",
       iconUrl: "icons/icon128.png",
       title: "Ten Hour Timer",
-      message: "Time's up — your 10 hour timer has finished.",
+      message: `Time's up — your ${formatDuration(totalMs)} timer has finished.`,
       priority: 2,
     });
   } else {

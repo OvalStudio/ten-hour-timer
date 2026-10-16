@@ -31,8 +31,70 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 26px;
-  padding: 34px 30px 30px;
+  gap: 20px;
+  padding: 30px 30px 26px;
+}
+
+.duration {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.field {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 8px 13px;
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 11px;
+  transition: border-color 0.2s ease, opacity 0.2s ease;
+}
+
+.field:focus-within {
+  border-color: rgba(34, 211, 238, 0.55);
+}
+
+.field input {
+  width: 46px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 600;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.field input::-webkit-outer-spin-button,
+.field input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.field input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.field input:disabled {
+  opacity: 0.45;
+}
+
+.field span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.duration .colon {
+  color: var(--muted);
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .ring {

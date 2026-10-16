@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Ten Hour Timer",
-  "version": "1.0.0",
-  "description": "A simple 10-hour countdown timer. Start it, reset it, and watch the time tick down from your toolbar — offline, no tracking, no network.",
+  "version": "1.1.0",
+  "description": "Set hours and minutes and count down — Reset restores your duration. Keeps running in the background. Offline, no tracking, no network.",
   "action": {
     "default_popup": "popup.html",
     "default_title": "Ten Hour Timer",
