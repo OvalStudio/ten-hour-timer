@@ -1,0 +1,148 @@
+:root {
+  --bg: #0b0f17;
+  --card: #101725;
+  --track: rgba(148, 163, 184, 0.16);
+  --accent: #22d3ee;
+  --accent-2: #6366f1;
+  --danger: #f87171;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+}
+
+body {
+  width: 380px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, #16233b 0%, var(--bg) 55%);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  user-select: none;
+}
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 26px;
+  padding: 34px 30px 30px;
+}
+
+.ring {
+  position: relative;
+  width: 250px;
+  height: 250px;
+}
+
+.ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ring circle {
+  fill: none;
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+
+.track {
+  stroke: var(--track);
+}
+
+.progress {
+  stroke: var(--accent);
+  stroke-dasharray: 100;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.25s linear, stroke 0.3s ease;
+  filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.35));
+}
+
+.ring.finished .progress {
+  stroke: var(--danger);
+  filter: drop-shadow(0 0 6px rgba(248, 113, 113, 0.35));
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.time {
+  font-size: 46px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.status {
+  font-size: 13px;
+  color: var(--muted);
+  min-height: 16px;
+}
+
+.status.running {
+  color: var(--accent);
+}
+
+.status.finished {
+  color: var(--danger);
+}
+
+.actions {
+  display: flex;
+  gap: 14px;
+  width: 100%;
+}
+
+button {
+  flex: 1;
+  padding: 13px 0;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: transform 0.08s ease, opacity 0.2s ease, background 0.2s ease;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+#start {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #04121a;
+  box-shadow: 0 8px 20px -8px rgba(34, 211, 238, 0.55);
+}
+
+#reset {
+  background: transparent;
+  border-color: rgba(148, 163, 184, 0.35);
+  color: #cbd5e1;
+}
+
+#reset:hover {
+  background: rgba(148, 163, 184, 0.1);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+  box-shadow: none;
+}

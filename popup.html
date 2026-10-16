@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Ten Hour Timer</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <main class="wrap">
+    <div class="ring">
+      <svg viewBox="0 0 240 240" aria-hidden="true">
+        <circle class="track" cx="120" cy="120" r="108" pathLength="100" />
+        <circle id="progress" class="progress" cx="120" cy="120" r="108" pathLength="100" />
+      </svg>
+      <div class="face">
+        <div id="time" class="time">10:00:00</div>
+        <div id="status" class="status">Ready</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="start" type="button">Start</button>
+      <button id="reset" type="button">Reset</button>
+    </div>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

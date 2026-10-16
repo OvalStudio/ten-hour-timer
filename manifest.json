@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Ten Hour Timer",
+  "version": "1.0.0",
+  "description": "A simple 10-hour countdown timer. Start it, reset it, and watch the time tick down from your toolbar — offline, no tracking, no network.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Ten Hour Timer",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage", "alarms", "notifications"],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
