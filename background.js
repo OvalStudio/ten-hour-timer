@@ -10,6 +10,7 @@ chrome.runtime.onInstalled.addListener(async () => {
       endTime: null,
       remainingMs: TOTAL_MS,
       totalMs: TOTAL_MS,
+      paused: false,
       hours: 10,
       minutes: 0,
     });
@@ -80,16 +81,27 @@ async function tick() {
 }
 
 async function updateBadge() {
-  const { endTime, remainingMs } = await chrome.storage.local.get({
+  const { endTime, remainingMs, paused } = await chrome.storage.local.get({
     endTime: null,
     remainingMs: TOTAL_MS,
+    paused: false,
   });
 
   const remaining = endTime === null ? remainingMs : endTime - Date.now();
+  const totalMinutes = Math.max(0, Math.ceil(remaining / 60000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const text = `${hours}h${String(minutes).padStart(2, "0")}`;
 
-  if (remaining <= 0 && endTime === null && remainingMs <= 0) {
+  if (endTime === null && remaining <= 0 && remainingMs <= 0) {
     chrome.action.setBadgeBackgroundColor({ color: "#ef4444" });
     chrome.action.setBadgeText({ text: "0h00" });
+    return;
+  }
+
+  if (endTime === null && paused && remainingMs > 0) {
+    chrome.action.setBadgeBackgroundColor({ color: "#f59e0b" });
+    chrome.action.setBadgeText({ text });
     return;
   }
 
@@ -98,9 +110,6 @@ async function updateBadge() {
     return;
   }
 
-  const totalMinutes = Math.max(0, Math.ceil(remaining / 60000));
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
   chrome.action.setBadgeBackgroundColor({ color: "#0ea5e9" });
-  chrome.action.setBadgeText({ text: `${hours}h${String(minutes).padStart(2, "0")}` });
+  chrome.action.setBadgeText({ text });
 }

@@ -1,14 +1,14 @@
 # Ten Hour Timer
 
-A dead-simple countdown timer for Chrome. Set your hours and minutes, press **Start**, and it counts backwards with a progress ring and live `HH:MM:SS` display. Defaults to 10 hours. Press **Reset** to stop and go back to the duration you set.
+A dead-simple countdown timer for Chrome. Set your hours and minutes, press **Start**, and it counts backwards with a progress ring and live `HH:MM:SS` display. Defaults to 10 hours. **Pause** freezes the countdown — the remaining time is stored, so **Resume** picks up exactly where you left off. **Reset** stops and goes back to the duration you set.
 
 ## Features
 
 - Count down from any duration you type in (defaults to `10:00:00`)
+- **Start / Pause / Reset** — pausing stores the exact remaining time, Start becomes Resume
 - Set hours & minutes once — they're remembered, so after an accidental **Reset** one click on **Start** runs your exact duration again
-- Only two buttons: **Start** and **Reset**
 - Keeps running when the popup is closed, when you switch tabs or windows, and even if Chrome restarts — the countdown is based on a stored end timestamp, never a live stopwatch
-- Remaining time shows as a badge on the toolbar icon
+- Remaining time shows as a badge on the toolbar icon (blue while running, amber while paused)
 - Desktop notification when the timer finishes
 - Offline, no tracking, no network requests
 

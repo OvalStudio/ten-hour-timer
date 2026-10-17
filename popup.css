@@ -5,6 +5,7 @@
   --accent: #22d3ee;
   --accent-2: #6366f1;
   --danger: #f87171;
+  --paused: #f59e0b;
   --text: #e5e7eb;
   --muted: #94a3b8;
 }
@@ -160,13 +161,17 @@ body {
   color: var(--accent);
 }
 
+.status.paused {
+  color: var(--paused);
+}
+
 .status.finished {
   color: var(--danger);
 }
 
 .actions {
   display: flex;
-  gap: 14px;
+  gap: 10px;
   width: 100%;
 }
 
@@ -175,7 +180,7 @@ button {
   padding: 13px 0;
   border: 1px solid transparent;
   border-radius: 12px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   font-family: inherit;
   letter-spacing: 0.2px;
@@ -193,14 +198,21 @@ button:active:not(:disabled) {
   box-shadow: 0 8px 20px -8px rgba(34, 211, 238, 0.55);
 }
 
+#pause,
 #reset {
   background: transparent;
   border-color: rgba(148, 163, 184, 0.35);
   color: #cbd5e1;
 }
 
-#reset:hover {
+#pause:hover:not(:disabled),
+#reset:hover:not(:disabled) {
   background: rgba(148, 163, 184, 0.1);
+}
+
+#pause:not(:disabled) {
+  border-color: rgba(245, 158, 11, 0.45);
+  color: var(--paused);
 }
 
 button:disabled {

@@ -6,6 +6,7 @@ const statusEl = document.getElementById("status");
 const progressEl = document.getElementById("progress");
 const ringEl = document.querySelector(".ring");
 const startBtn = document.getElementById("start");
+const pauseBtn = document.getElementById("pause");
 const resetBtn = document.getElementById("reset");
 const hoursEl = document.getElementById("hours");
 const minutesEl = document.getElementById("minutes");
@@ -13,6 +14,7 @@ const minutesEl = document.getElementById("minutes");
 let endTime = null;
 let remainingMs = null;
 let totalMs = null;
+let paused = false;
 let ready = false;
 let lastBadge = null;
 
@@ -47,14 +49,21 @@ function formatEndTime(ts) {
   return new Date(ts).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
-function setBadge(remaining, running) {
+function badgeText(remaining) {
+  const totalMinutes = Math.max(0, Math.ceil(remaining / 60000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}h${String(minutes).padStart(2, "0")}`;
+}
+
+function setBadge(remaining, running, isPaused) {
   let text = "";
   if (running) {
-    const totalMinutes = Math.ceil(remaining / 60000);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
     chrome.action.setBadgeBackgroundColor({ color: "#0ea5e9" });
-    text = `${hours}h${String(minutes).padStart(2, "0")}`;
+    text = badgeText(remaining);
+  } else if (isPaused) {
+    chrome.action.setBadgeBackgroundColor({ color: "#f59e0b" });
+    text = badgeText(remaining);
   } else if (remaining <= 0) {
     chrome.action.setBadgeBackgroundColor({ color: "#ef4444" });
     text = "0h00";
@@ -69,6 +78,7 @@ function persist() {
     endTime,
     remainingMs,
     totalMs,
+    paused,
     hours: readInt(hoursEl, 99),
     minutes: readInt(minutesEl, 59),
   });
@@ -77,6 +87,7 @@ function persist() {
 function finish() {
   endTime = null;
   remainingMs = 0;
+  paused = false;
   persist();
 }
 
@@ -90,17 +101,21 @@ function render() {
   }
 
   const running = endTime !== null;
+  const isPaused = !running && paused && remaining > 0;
   const configured = inputTotalMs();
-  const denominator = running ? totalMs || configured || 1 : configured > 0 ? configured : 1;
+  const denominator = running || isPaused ? totalMs || configured || 1 : configured > 0 ? configured : 1;
 
   timeEl.textContent = formatTime(remaining);
   progressEl.style.strokeDashoffset = String(100 - Math.min(1, remaining / denominator) * 100);
   ringEl.classList.toggle("finished", remaining <= 0 && configured > 0);
-  statusEl.classList.remove("running", "finished");
+  statusEl.classList.remove("running", "paused", "finished");
 
   if (running) {
     statusEl.textContent = `Ends at ${formatEndTime(endTime)}`;
     statusEl.classList.add("running");
+  } else if (isPaused) {
+    statusEl.textContent = "Paused";
+    statusEl.classList.add("paused");
   } else if (remaining <= 0 && configured > 0) {
     statusEl.textContent = "Time's up!";
     statusEl.classList.add("finished");
@@ -113,8 +128,10 @@ function render() {
 
   hoursEl.disabled = running;
   minutesEl.disabled = running;
-  startBtn.disabled = running || configured <= 0;
-  setBadge(remaining, running);
+  startBtn.textContent = isPaused ? "Resume" : "Start";
+  startBtn.disabled = running || (!isPaused && configured <= 0);
+  pauseBtn.disabled = !running;
+  setBadge(remaining, running, isPaused);
 }
 
 function onDurationInput() {
@@ -122,6 +139,7 @@ function onDurationInput() {
     const configured = inputTotalMs();
     remainingMs = configured;
     totalMs = configured;
+    paused = false;
     persist();
   }
   render();
@@ -129,11 +147,26 @@ function onDurationInput() {
 
 startBtn.addEventListener("click", () => {
   if (endTime !== null) return;
-  const configured = inputTotalMs();
-  if (configured <= 0) return;
-  endTime = Date.now() + configured;
-  remainingMs = configured;
-  totalMs = configured;
+  if (paused && remainingMs > 0) {
+    endTime = Date.now() + remainingMs;
+    paused = false;
+  } else {
+    const configured = inputTotalMs();
+    if (configured <= 0) return;
+    remainingMs = configured;
+    totalMs = configured;
+    endTime = Date.now() + configured;
+  }
+  lastBadge = null;
+  persist();
+  render();
+});
+
+pauseBtn.addEventListener("click", () => {
+  if (endTime === null) return;
+  remainingMs = Math.max(0, endTime - Date.now());
+  endTime = null;
+  paused = remainingMs > 0;
   lastBadge = null;
   persist();
   render();
@@ -144,6 +177,7 @@ resetBtn.addEventListener("click", () => {
   endTime = null;
   remainingMs = configured;
   totalMs = configured;
+  paused = false;
   lastBadge = null;
   persist();
   render();
@@ -167,6 +201,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if ("endTime" in changes) endTime = changes.endTime.newValue;
   if ("remainingMs" in changes) remainingMs = changes.remainingMs.newValue;
   if ("totalMs" in changes) totalMs = changes.totalMs.newValue;
+  if ("paused" in changes) paused = !!changes.paused.newValue;
   render();
 });
 
@@ -175,11 +210,13 @@ chrome.storage.local.get(
     endTime: null,
     remainingMs: null,
     totalMs: null,
+    paused: false,
     hours: DEFAULT_HOURS,
     minutes: DEFAULT_MINUTES,
   },
   (state) => {
     endTime = state.endTime;
+    paused = !!state.paused;
     hoursEl.value = String(state.hours);
     minutesEl.value = String(state.minutes);
     const configured = inputTotalMs();
